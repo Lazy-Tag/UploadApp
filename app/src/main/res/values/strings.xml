@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">BlockChain</string>
+    <string-array name="action_options">
+        <item>Generate QR Code</item>
+        <item>Scan QR Code</item>
+    </string-array>
+
 </resources>
