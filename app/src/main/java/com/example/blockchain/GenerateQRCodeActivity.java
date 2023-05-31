@@ -50,9 +50,7 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
     private EditText editText;
     private ImageView qrCodeImageView;
     private Geocoder geocoder;
-
     private String location;
-
     LocationManager locationManager;
     private static final int REQUEST_CODE_LOCATION_PERMISSION = 100;
 
@@ -71,8 +69,7 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_generate_qrcode);
 
-        setTitle("Generate QR Code");
-
+        setTitle("生成二维码");
         editText = findViewById(R.id.edit_text);
         qrCodeImageView = findViewById(R.id.qr_code_image_view);
 
@@ -101,7 +98,6 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            // 处理导航返回按钮点击事件
             onBackPressed();
             return true;
         }
@@ -110,11 +106,12 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
 
     private void generateQRCode() {
         String text = editText.getText().toString().trim();
+        text = location + "商店信息: "+ text + "\n";
 
         if (!text.isEmpty()) {
             try {
                 Map<EncodeHintType, Object> hints = new EnumMap<>(EncodeHintType.class);
-                hints.put(EncodeHintType.CHARACTER_SET, "UTF-8"); // 设置编码格式
+                hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
 
                 QRCodeWriter qrCodeWriter = new QRCodeWriter();
                 BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 512, 512, hints);
@@ -157,7 +154,6 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
     @SuppressLint("MissingPermission")
     private void getLocation() {
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 0, locationListener);
     }
 
@@ -170,7 +166,7 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
                 String city = address.getLocality();
                 String district = address.getSubLocality();
 
-                location = "省份: " + province + "\n地级市: " + city + "\n区县: " + district;
+                location = "省份: " + province + "\n地级市: " + city + "\n区县: " + district + "\n";
             }
         } catch (IOException e) {
             e.printStackTrace();

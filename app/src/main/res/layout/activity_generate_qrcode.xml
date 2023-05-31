@@ -10,14 +10,14 @@
         android:id="@+id/edit_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Enter text" />
+        android:hint="请输入商店位置信息" />
 
     <Button
         android:id="@+id/generate_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Generate QR Code" />
+        android:text="生成二维码" />
 
     <ImageView
         android:id="@+id/qr_code_image_view"

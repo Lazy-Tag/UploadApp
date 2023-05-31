@@ -1,14 +1,19 @@
 package com.example.blockchain;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.Toolbar;
 
@@ -18,24 +23,34 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.zxing.client.android.Intents;
 
+import java.util.ArrayList;
+import java.util.List;
 
 public class ScanQRCodeActivity extends AppCompatActivity {
     private static final String TAG = "ScanQRCodeActivity";
     private static final int REQUEST_CODE_SCAN = 100;
     private static final int REQUEST_CODE_CAMERA_PERMISSION = 200;
+    List<String> wifiInfo = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scan_qrcode);
 
-        setTitle("Scan QR Code");
-
+        setTitle("扫描二维码");
         Button scanButton = findViewById(R.id.scan_button);
+        Button wifiButton = findViewById(R.id.wifi_button);
         scanButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 checkCameraPermission();
+            }
+        });
+
+        wifiButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getWifiInfo();
             }
         });
 
@@ -46,10 +61,27 @@ public class ScanQRCodeActivity extends AppCompatActivity {
         }
     }
 
+    private void getWifiInfo() {
+        wifiInfo.clear();
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (!wifiManager.isWifiEnabled()) {
+            wifiManager.setWifiEnabled(true);
+        }
+        wifiManager.startScan();
+
+        List<ScanResult> scanResults = wifiManager.getScanResults();
+        for (ScanResult scanResult : scanResults) {
+            String bssid = scanResult.BSSID;
+            int rssi = scanResult.level;
+            wifiInfo.add("Mac地址: " + bssid + "\n" + " 信号强度: " + Integer.toString(rssi));
+        }
+        TextView textView = findViewById(R.id.result_text_view);
+        textView.append("Wi-Fi指纹扫描成功！\n");
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            // 处理导航返回按钮点击事件
             onBackPressed();
             return true;
         }
@@ -77,7 +109,13 @@ public class ScanQRCodeActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CODE_SCAN && resultCode == RESULT_OK) {
             if (data != null && data.hasExtra(Intents.Scan.RESULT)) {
                 String qrCodeResult = data.getStringExtra(Intents.Scan.RESULT);
-                Toast.makeText(this, "Scanned QR code: " + qrCodeResult, Toast.LENGTH_SHORT).show();
+                StringBuilder result = new StringBuilder(qrCodeResult);
+                result.append("wifi指纹信息: \n");
+                for (String wifi : wifiInfo) {
+                    result.append(wifi).append("\n");
+                }
+                TextView textView = findViewById(R.id.result_text_view);
+                textView.append(result);
             }
         }
     }
