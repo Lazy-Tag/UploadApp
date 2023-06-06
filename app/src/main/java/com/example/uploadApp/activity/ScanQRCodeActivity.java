@@ -1,4 +1,4 @@
-package com.example.blockchain.activity;
+package com.example.uploadApp.activity;
 
 import android.Manifest;
 import android.content.Context;
@@ -20,8 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.blockchain.R;
-import com.example.blockchain.activity.MyCaptureActivity;
+import com.example.uploadApp.R;
 import com.google.zxing.client.android.Intents;
 
 import java.util.ArrayList;

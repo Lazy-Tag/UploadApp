@@ -1,4 +1,4 @@
-package com.example.blockchain.activity;
+package com.example.uploadApp.activity;
 
 import com.journeyapps.barcodescanner.CaptureActivity;
 

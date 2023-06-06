@@ -1,4 +1,4 @@
-package com.example.blockchain.activity;
+package com.example.uploadApp.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,8 +14,8 @@ import org.json.JSONObject;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.blockchain.R;
-import com.example.blockchain.Server;
+import com.example.uploadApp.R;
+import com.example.uploadApp.Server;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {

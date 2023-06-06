@@ -1,7 +1,7 @@
 <resources>
     <string-array name="action_options">
-        <item>Generate QR Code</item>
-        <item>Scan QR Code</item>
+        <item>生成二维码</item>
+        <item>扫描二维码</item>
     </string-array>
 
 </resources>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.uploadApp"
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.CAMERA"/>
@@ -20,12 +21,13 @@
         android:icon="@mipmap/ic_launcher"
         android:testOnly="false"
         android:supportsRtl="true"
-        android:theme="@style/Theme.BlockChain"
+        android:theme="@style/Theme.UploadApp"
+        android:label="Uploader"
         tools:targetApi="31">
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.example.blockchain.fileprovider"
+            android:authorities="com.example.uploadApp.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
