@@ -1,4 +1,4 @@
-package com.example.blockchain.server;
+package com.example.blockchain;
 
 import org.json.JSONObject;
 import java.io.IOException;

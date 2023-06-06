@@ -2,20 +2,25 @@ package com.example.blockchain.activity;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Address;
-import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.os.Build;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -26,13 +31,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import com.example.blockchain.R;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
@@ -42,6 +43,8 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.EnumMap;
 import java.util.List;
@@ -83,6 +86,14 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 generateQRCode();
+            }
+        });
+
+        Button exportButton = findViewById(R.id.export_button);
+        exportButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                exportQRCode();
             }
         });
 
@@ -141,6 +152,8 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
                 Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                 bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
                 qrCodeImageView.setImageBitmap(bitmap);
+                qrCodeImageView.setDrawingCacheEnabled(true);
+                qrCodeImageView.buildDrawingCache();
             } catch (WriterException e) {
                 Log.e(TAG, "Error generating QR code: " + e.getMessage());
                 Toast.makeText(this, "Error generating QR code", Toast.LENGTH_SHORT).show();
@@ -199,6 +212,34 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(this, "请求位置被拒绝！\n", Toast.LENGTH_LONG).show();
             }
+        }
+    }
+
+    private void exportQRCode() {
+        Bitmap bitmap = ((BitmapDrawable) qrCodeImageView.getDrawable()).getBitmap();
+        String path = Environment.getExternalStorageDirectory().toString();
+        File tempDir = new File(path + "/temp");
+        tempDir.mkdirs();
+        File imageFile = new File(tempDir, "qrcode_temp.png");
+        Uri imageUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", imageFile);
+        try {
+            FileOutputStream fos = new FileOutputStream(imageFile);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("image/*");
+        shareIntent.setPackage("com.tencent.mm");
+        shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        if (shareIntent.resolveActivity(getPackageManager()) != null) {
+            startActivity(shareIntent);
+        } else {
+            Toast.makeText(this, "无法找到可处理分享的应用程序", Toast.LENGTH_SHORT).show();
         }
     }
 }
