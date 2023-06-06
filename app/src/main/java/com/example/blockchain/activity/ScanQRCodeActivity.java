@@ -1,7 +1,6 @@
-package com.example.blockchain;
+package com.example.blockchain.activity;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -10,17 +9,19 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.Toolbar;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.blockchain.R;
+import com.example.blockchain.activity.MyCaptureActivity;
 import com.google.zxing.client.android.Intents;
 
 import java.util.ArrayList;
@@ -30,7 +31,8 @@ public class ScanQRCodeActivity extends AppCompatActivity {
     private static final String TAG = "ScanQRCodeActivity";
     private static final int REQUEST_CODE_SCAN = 100;
     private static final int REQUEST_CODE_CAMERA_PERMISSION = 200;
-    List<String> wifiInfo = new ArrayList<>();
+    private JSONObject result = null;
+    List<JSONObject> wifiInfo = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +75,14 @@ public class ScanQRCodeActivity extends AppCompatActivity {
         for (ScanResult scanResult : scanResults) {
             String bssid = scanResult.BSSID;
             int rssi = scanResult.level;
-            wifiInfo.add("Mac地址: " + bssid + "\n" + " 信号强度: " + Integer.toString(rssi));
+            try {
+                JSONObject wifi = new JSONObject();
+                wifi.put("Mac address", bssid);
+                wifi.put("RSSI", rssi);
+                wifiInfo.add(wifi);
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
         }
         TextView textView = findViewById(R.id.result_text_view);
         textView.append("Wi-Fi指纹扫描成功！\n");
@@ -82,7 +91,15 @@ public class ScanQRCodeActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
+            Intent intent = new Intent();
+            if (result != null) {
+                intent.putExtra("data return", result.toString());
+                setResult(RESULT_OK, intent);
+                finish();
+            } else {
+                setResult(RESULT_CANCELED, intent);
+                finish();
+            }
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -109,13 +126,21 @@ public class ScanQRCodeActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CODE_SCAN && resultCode == RESULT_OK) {
             if (data != null && data.hasExtra(Intents.Scan.RESULT)) {
                 String qrCodeResult = data.getStringExtra(Intents.Scan.RESULT);
-                StringBuilder result = new StringBuilder(qrCodeResult);
-                result.append("wifi指纹信息: \n");
-                for (String wifi : wifiInfo) {
-                    result.append(wifi).append("\n");
+                StringBuilder stringBuilder = new StringBuilder();
+                JSONObject wifiList = new JSONObject();
+                try {
+                    int cnt = 0;
+                    for (JSONObject wifi : wifiInfo) {
+                        wifiList.put("wifi" + Integer.toString(cnt), wifi);
+                        cnt ++ ;
+                    }
+                    result = new JSONObject(qrCodeResult);
+                    result.put("wifi fingerprints", wifiList);
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
                 }
                 TextView textView = findViewById(R.id.result_text_view);
-                textView.append(result);
+                textView.append(result.toString());
             }
         }
     }

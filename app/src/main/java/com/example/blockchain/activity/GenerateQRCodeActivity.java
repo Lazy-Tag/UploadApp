@@ -1,4 +1,4 @@
-package com.example.blockchain;
+package com.example.blockchain.activity;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -28,6 +28,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.blockchain.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -38,6 +39,9 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.EnumMap;
 import java.util.List;
@@ -46,11 +50,11 @@ import java.util.Map;
 
 public class GenerateQRCodeActivity extends AppCompatActivity {
     private static final String TAG = "GenerateQRCodeActivity";
-
-    private EditText editText;
+    private EditText editText1, editText2;
     private ImageView qrCodeImageView;
     private Geocoder geocoder;
-    private String location;
+
+    private JSONObject data = null;
     LocationManager locationManager;
     private static final int REQUEST_CODE_LOCATION_PERMISSION = 100;
 
@@ -70,7 +74,8 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_generate_qrcode);
 
         setTitle("生成二维码");
-        editText = findViewById(R.id.edit_text);
+        editText1 = findViewById(R.id.edit_text_1);
+        editText2 = findViewById(R.id.edit_text_2);
         qrCodeImageView = findViewById(R.id.qr_code_image_view);
 
         Button generateButton = findViewById(R.id.generate_button);
@@ -105,8 +110,15 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
     }
 
     private void generateQRCode() {
-        String text = editText.getText().toString().trim();
-        text = location + "商店信息: "+ text + "\n";
+        String text = editText2.getText().toString().trim();
+        String account = editText1.getText().toString().trim();
+        try {
+            data.put("shop location information", text);
+            data.put("shop account", account);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        text = data.toString();
 
         if (!text.isEmpty()) {
             try {
@@ -126,10 +138,8 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
                         pixels[offset + x] = bitMatrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF;
                     }
                 }
-
                 Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                 bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
-
                 qrCodeImageView.setImageBitmap(bitmap);
             } catch (WriterException e) {
                 Log.e(TAG, "Error generating QR code: " + e.getMessage());
@@ -166,10 +176,17 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
                 String city = address.getLocality();
                 String district = address.getSubLocality();
 
-                location = "省份: " + province + "\n地级市: " + city + "\n区县: " + district + "\n";
+                data = new JSONObject();
+                JSONObject location = new JSONObject();
+                location.put("province", province);
+                location.put("city", city);
+                location.put("district", district);
+                data.put("location", location);
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -184,7 +201,4 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
             }
         }
     }
-
-
-
 }
