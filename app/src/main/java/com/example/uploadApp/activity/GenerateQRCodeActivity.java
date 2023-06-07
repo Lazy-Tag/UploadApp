@@ -120,6 +120,10 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
     private void generateQRCode() {
         String text = editText2.getText().toString().trim();
         String account = editText1.getText().toString().trim();
+        if (text.equals("") || account.equals("")) {
+            Toast.makeText(this, "请输入账户信息与位置信息", Toast.LENGTH_SHORT).show();
+            return;
+        }
         try {
             data.put("shop location information", text);
             data.put("shop account", account);
@@ -128,6 +132,7 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
         }
         text = data.toString();
 
+        System.out.println(text);
         if (!text.isEmpty()) {
             try {
                 Map<EncodeHintType, Object> hints = new EnumMap<>(EncodeHintType.class);
@@ -213,12 +218,16 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
     }
 
     private void exportQRCode() {
+        if (qrCodeImageView.getDrawable() == null) {
+            Toast.makeText(this, "请生成二维码后再分享！", Toast.LENGTH_LONG).show();
+            return;
+        }
         Bitmap bitmap = ((BitmapDrawable) qrCodeImageView.getDrawable()).getBitmap();
         String path = Environment.getExternalStorageDirectory().toString();
         System.out.println(path);
         File tempDir = new File(path + "/temp");
         tempDir.mkdirs();
-        File imageFile = new File(tempDir, "qrcode_temp.png");
+        File imageFile = new File(tempDir, "qrcode_temp_" + System.currentTimeMillis() + ".png");
         Uri imageUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", imageFile);
         try {
             FileOutputStream fos = new FileOutputStream(imageFile);
