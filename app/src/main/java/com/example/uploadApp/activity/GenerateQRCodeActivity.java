@@ -215,6 +215,7 @@ public class GenerateQRCodeActivity extends AppCompatActivity {
     private void exportQRCode() {
         Bitmap bitmap = ((BitmapDrawable) qrCodeImageView.getDrawable()).getBitmap();
         String path = Environment.getExternalStorageDirectory().toString();
+        System.out.println(path);
         File tempDir = new File(path + "/temp");
         tempDir.mkdirs();
         File imageFile = new File(tempDir, "qrcode_temp.png");

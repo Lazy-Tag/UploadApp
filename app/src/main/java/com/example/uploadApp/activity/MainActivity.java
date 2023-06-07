@@ -1,7 +1,9 @@
 package com.example.uploadApp.activity;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -12,17 +14,24 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.uploadApp.Encrypter;
 import com.example.uploadApp.R;
 import com.example.uploadApp.Server;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import javax.crypto.SecretKey;
+
 public class MainActivity extends AppCompatActivity {
     private static int REQUEST_CODE = 1;
-    private EditText account;
+    private String account;
     private EditText money;
+    private String securityKey;
     private String result;
+
+    private final Server server = new Server();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,8 +39,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         setTitle("Block Chain");
 
-        account = findViewById(R.id.edit_text_1);
-        money = findViewById(R.id.edit_text_2);
+        money = findViewById(R.id.edit_text);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation_view);
         bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
             @Override
@@ -49,21 +57,25 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Button button = findViewById(R.id.button);
-        button.setOnClickListener(new View.OnClickListener() {
+        Button uploadButton = findViewById(R.id.upload_button);
+        uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String accountInfo = account.getText().toString().trim();
+                if (account == null) {
+                    Toast.makeText(getApplicationContext(), "请登录区块链账户！", Toast.LENGTH_LONG).show();
+                    return;
+                }
                 String moneyInfo = money.getText().toString().trim();
                 if (result != null) {
                     try {
                         JSONObject data = new JSONObject(result);
                         data.put("price", moneyInfo);
-                        data.put("upload account", accountInfo);
-                        Server server = new Server();
-                        server.upload(accountInfo, data);
-                        Toast.makeText(getApplicationContext(), "上传成功" + result, Toast.LENGTH_LONG).show();
-
+                        data.put("upload account", account);
+                        data.put("timestamp", Long.toString(System.currentTimeMillis()));
+                        Encrypter encrypter = new Encrypter(data, securityKey);
+                        JSONObject encrypt = encrypter.exec();
+                        server.upload(account, encrypt);
+                        Toast.makeText(getApplicationContext(), "上传成功", Toast.LENGTH_LONG).show();
                         result = null;
                     } catch (JSONException e) {
                         throw new RuntimeException(e);
@@ -73,6 +85,50 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        Button LogButton = findViewById(R.id.log_button);
+        LogButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog alertDialog = setAlertDialog();
+                alertDialog.show();
+            }
+        });
+    }
+
+    private AlertDialog setAlertDialog() {
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = this.getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.login_dialog, null);
+        dialogBuilder.setView(dialogView);
+        dialogBuilder.setTitle("登录区块链账户");
+        dialogBuilder.setPositiveButton("登录", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                EditText editTextUsername = dialogView.findViewById(R.id.edit_text_username);
+                EditText editTextPassword = dialogView.findViewById(R.id.edit_text_key);
+                String accountTemp = editTextUsername.getText().toString();
+                String securityKeyTemp = editTextPassword.getText().toString();
+                Boolean success = server.log(accountTemp, Encrypter.getSha256Hex(securityKeyTemp, "UTF-8"));
+                if (success) {
+                    account = accountTemp;
+                    securityKey = securityKeyTemp;
+                    Toast.makeText(MainActivity.this, "登录成功！", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                } else {
+                    Toast.makeText(MainActivity.this, "登录失败！", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        dialogBuilder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Toast.makeText(MainActivity.this, "取消登录！", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            }
+        });
+        return dialogBuilder.create();
     }
 
     private void startGenerateQRCodeActivity() {
@@ -93,5 +149,4 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), "获取数据成功", Toast.LENGTH_SHORT).show();
         }
     }
-
 }
