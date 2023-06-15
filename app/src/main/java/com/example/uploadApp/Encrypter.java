@@ -10,6 +10,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class Encrypter {
@@ -24,9 +25,10 @@ public class Encrypter {
 
     public JSONObject exec() {
         try {
-            String timestamp = data.getString("upload account");
-            String key = modifyKey(getSha256Hex(securityKey + timestamp, "UTF-8"));
-            String encrypted = encrypt(data.getString("wifi fingerprints"), key);
+            String timestamp = data.getString("timestamp");
+            String key = modifyKey(getSha256Hex(securityKey + timestamp, "UTF-8"), 16);
+            System.out.println(key);
+            String encrypted = encrypt(data.getString("wifi fingerprints"), key, modifyKey(key, 16));
             data.put("wifi fingerprints", encrypted);
             return data;
         } catch (Exception e) {
@@ -34,26 +36,27 @@ public class Encrypter {
         }
     }
 
-    private String modifyKey(String key) {
-        int AESLen = 32;
-        if (key.length() < AESLen) {
-            int paddingLength = AESLen - key.length();
+    private String modifyKey(String key, int len) {
+        if (key.length() < len) {
+            int paddingLength = len - key.length();
             StringBuilder keyBuilder = new StringBuilder(key);
             for (int i = 0; i < paddingLength; i++) {
                 keyBuilder.append("0");
             }
             key = keyBuilder.toString();
-        } else if (key.length() > AESLen) {
-            key = key.substring(0, AESLen);
+        } else if (key.length() > len) {
+            key = key.substring(0, len);
         }
         return key;
     }
 
-    private static String encrypt(String plainText, String secretKey) throws Exception {
+    private static String encrypt(String plainText, String secretKey, String iv) throws Exception {
         byte[] keyBytes = secretKey.getBytes("UTF-8");
-        Key key = new SecretKeySpec(keyBytes, "AES");
-        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-        cipher.init(Cipher.ENCRYPT_MODE, key);
+        byte[] ivBytes = iv.getBytes("UTF-8");
+        SecretKeySpec secretKeySpec = new SecretKeySpec(keyBytes, "AES");
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(ivBytes);
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
         byte[] encryptedBytes = cipher.doFinal(plainText.getBytes("UTF-8"));
         return Base64.getEncoder().encodeToString(encryptedBytes);
     }
